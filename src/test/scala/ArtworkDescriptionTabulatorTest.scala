@@ -1,7 +1,9 @@
 import Catalogue.ArtworkDescription
 import ArtworkDescriptionTabulator._
+import io.circe.literal.JsonStringContext
 import org.scalatest.freespec.AnyFreeSpecLike
 import org.scalatest.matchers.should.Matchers
+import ArtworkSummaryEncoders._
 
 class ArtworkDescriptionTabulatorTest extends AnyFreeSpecLike with Matchers {
 
@@ -32,6 +34,41 @@ class ArtworkDescriptionTabulatorTest extends AnyFreeSpecLike with Matchers {
         DepartmentCountries(DepartmentName("Textiles"), List(CountryMediums(CountryName("Colombia"), List(MediumCount(MediumName("Wool and horsehair; wrapped"), 1))))))
 
       tabulator.departmentCountries(artworkList) shouldBe expected
+    }
+  }
+
+  "Artwork Summary" -  {
+    val mediumCount = MediumCount(MediumName("painting"), 10)
+    val mediumCountList = List(mediumCount, mediumCount, mediumCount)
+
+    "should correctly encode the json for MediumCounty" in {
+      val expected =
+        json"""{
+          "name": "painting",
+          "children": 10
+          }
+            """
+      ArtworkSummaryEncoders.mediumCount.apply(mediumCount) shouldBe expected
+    }
+
+    "should create a json list of Medium counts" in {
+      val expected =
+        json"""{
+          "name": "painting",
+          "children": 10
+          }
+            """
+      ArtworkSummaryEncoders.mediumCountList(mediumCountList) shouldBe expected
+    }
+
+    "should create a json list of name with medium name" in {
+      val expected =
+        json"""{
+          "name": "painting",
+          "children": 10
+          }
+            """
+      ArtworkSummaryEncoders.mediumCountList2(mediumCountList) shouldBe expected
     }
   }
 }

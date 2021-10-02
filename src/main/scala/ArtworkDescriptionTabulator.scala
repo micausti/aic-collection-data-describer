@@ -47,33 +47,46 @@ object ArtworkDescriptionTabulator {
   case class MediumCount(medium: MediumName, count: Int) extends Children
 }
 
-object ArtworkSummary {
+object ArtworkSummaryEncoders {
 
-  val stg = ArtworkSummary(Museum("museum"), DepartmentCountries(DepartmentName("department"),CountryMediums(CountryName("country"), MediumCount(MediumName("medium"), 1))), )
-
-  implicit val ArtworkSummary: Encoder[ArtworkSummary] = new Encoder[ArtworkSummary] {
-    final def apply(a: ArtworkSummary): Json = Json.obj(
-      ("name", Json.fromString(a.museum.value)),
-      ("children", Json.arr(a.departmentCountries.map(d =>
-        Json.obj(
-          ("name", Json.fromString(d.department.value)),
-          ("children", Json.arr(d.countryMediums.map(c =>
-          Json.obj(
-            ("name", Json.fromString(c.country.value)),
-            ("children", Json.arr(c.mediumCount.map(m =>
-            Json.obj(
-              ("name", Json.fromString(m.medium.value)),
-              ("children", Json.fromInt(m.count))
-            ))))
-          ))))))))
-
-    )
-
-    val json =
-      json"""{
-    "name": "departmentCountries",
-    "children": [
-}"""
-
+  implicit val mediumCount: Encoder[MediumCount] = new Encoder[MediumCount] {
+    override def apply(a: MediumCount): Json = Json.obj(("name", Json.fromString(a.medium.value)), ("children", Json.fromInt(a.count)))
   }
+
+  def mediumCountList(a: List[MediumCount]) = a.map(m => Json.obj((m.medium.value, Json.fromInt(m.count))))
+
+  def mediumCountList2(a: List[MediumCount]) = (a.map(m => Json.arr(Json.obj(("name", Json.fromString(m.medium.value)),("value", Json.fromInt(m.count))))))
+
+//  def mediumCountList3(a: List[MediumCount]) = Json.arr(a.map(m => Json.obj(("name", Json.fromString(m.medium.value)))))
+//  implicit val countryMediums: Encoder[CountryMediums] = new Encoder[CountryMediums] {
+//    override def apply(a: CountryMediums): Json = {
+//      def mediumCountList(a: List[MediumCount]) = a.map(m => Json.obj((m.medium.value, Json.fromInt(m.count))))
+//      Json.arr(Json.obj(("name", Json.fromString(a.country.value))), Json.arr(Json.fromString("children"), mediumCountList(a.mediumCount))
+//    }
+//  }
+
+  //val stg = ArtworkSummary(Museum("museum"), DepartmentCountries(DepartmentName("department"),CountryMediums(CountryName("country"), MediumCount(MediumName("medium"), 1))), )
+
+//  implicit val ArtworkSummary: Encoder[ArtworkSummary] = new Encoder[ArtworkSummary] {
+//    final def apply(a: ArtworkSummary): Json = Json.obj(
+//      ("name", Json.fromString(a.museum.value)),
+//      ("children", Json.arr(a.departmentCountries.map(d =>
+//        Json.obj(
+//          ("name", Json.fromString(d.department.value)),
+//          ("children", Json.arr(d.countryMediums.map(c =>
+//            Json.obj(
+//              ("name", Json.fromString(c.country.value)),
+//              ("children", Json.arr(c.mediumCount.map(m =>
+//                Json.obj(
+//                  ("name", Json.fromString(m.medium.value)),
+//                  ("children", Json.fromInt(m.count))
+//                ))))
+//            ))))))))
+//
+//    )
+//  }
+
+
+
+}
 
