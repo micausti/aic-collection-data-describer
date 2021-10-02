@@ -1,4 +1,9 @@
+import ArtworkDescriptionTabulator.{ArtworkSummary, CountryMediums, CountryName, DepartmentCountries, DepartmentName, MediumCount, MediumName, Museum, artworkSummary}
 import Catalogue.ArtworkDescription
+import io.circe.literal.JsonStringContext
+import io.circe.{Encoder, Json}
+
+import java.time.Instant
 
 object ArtworkDescriptionTabulator {
 
@@ -17,17 +22,58 @@ object ArtworkDescriptionTabulator {
     artworks.map(_.department_title).distinct.map(d => DepartmentCountries(DepartmentName(d), countryMediums(DepartmentName(d), artworks)))
   }
 
-  case class MediumName(value: String)
+  def artworkSummary(departmentCountries: List[DepartmentCountries]): ArtworkSummary = {
+    ArtworkSummary(Museum("Art Institute Chicago"),  departmentCountries)
+  }
 
-  case class CountryName(value: String)
 
-  case class DepartmentName(value: String)
+  trait Parent
+  case class MediumName(value: String) extends Parent
 
-  case class ArtworkSummary(departmentCountries: List[DepartmentCountries])
+  case class CountryName(value: String) extends Parent
 
-  case class DepartmentCountries(departmentName: DepartmentName, countries: List[CountryMediums])
+  case class DepartmentName(value: String) extends Parent
 
-  case class CountryMediums(countryName: CountryName, mediums: List[MediumCount]) //distinct list of mediums for each country
+  case class Museum(value: String) extends Parent
 
-  case class MediumCount(mediumName: MediumName, mediumCount: Int) //a count of items for each medium
+
+  trait Children
+  case class ArtworkSummary(museum: Museum, departmentCountries: List[DepartmentCountries]) extends Children
+
+  case class DepartmentCountries(department: DepartmentName, countryMediums: List[CountryMediums]) extends Children
+
+  case class CountryMediums(country: CountryName, mediumCount: List[MediumCount]) extends Children
+
+  case class MediumCount(medium: MediumName, count: Int) extends Children
 }
+
+object ArtworkSummary {
+
+  val stg = ArtworkSummary(Museum("museum"), DepartmentCountries(DepartmentName("department"),CountryMediums(CountryName("country"), MediumCount(MediumName("medium"), 1))), )
+
+  implicit val ArtworkSummary: Encoder[ArtworkSummary] = new Encoder[ArtworkSummary] {
+    final def apply(a: ArtworkSummary): Json = Json.obj(
+      ("name", Json.fromString(a.museum.value)),
+      ("children", Json.arr(a.departmentCountries.map(d =>
+        Json.obj(
+          ("name", Json.fromString(d.department.value)),
+          ("children", Json.arr(d.countryMediums.map(c =>
+          Json.obj(
+            ("name", Json.fromString(c.country.value)),
+            ("children", Json.arr(c.mediumCount.map(m =>
+            Json.obj(
+              ("name", Json.fromString(m.medium.value)),
+              ("children", Json.fromInt(m.count))
+            ))))
+          ))))))))
+
+    )
+
+    val json =
+      json"""{
+    "name": "departmentCountries",
+    "children": [
+}"""
+
+  }
+
